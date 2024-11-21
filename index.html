@@ -149,8 +149,10 @@
   </div>
 
   <script>
+    // Referensi elemen DOM
     const form = document.getElementById("invoiceForm");
     const invoiceTableBody = document.getElementById("invoiceTableBody");
+    const invoiceTable = document.getElementById("invoiceTable"); // Table untuk DataTables
     const invoiceIndex = document.getElementById("invoiceIndex");
     const invoiceId = document.getElementById("invoiceId");
     const customerName = document.getElementById("customerName");
@@ -163,31 +165,37 @@
     const printTotalAmount = document.getElementById("printTotalAmount");
     const printInvoiceDate = document.getElementById("printInvoiceDate");
     const generatePDFButton = document.getElementById("generatePDFButton");
-
+  
+    let dataTableInstance; // Untuk menyimpan instance DataTable
+  
+    // Load data invoices dari LocalStorage
     function loadInvoices() {
       const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
       renderTable(invoices);
     }
-
+  
+    // Simpan atau perbarui invoice ke LocalStorage
     function saveInvoice(invoice) {
       const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
       if (invoiceIndex.value === "") {
-        invoices.push(invoice); // Add new invoice
+        invoices.push(invoice); // Tambahkan invoice baru
       } else {
-        invoices[invoiceIndex.value] = invoice; // Edit existing invoice
+        invoices[invoiceIndex.value] = invoice; // Edit invoice yang ada
       }
       localStorage.setItem("invoices", JSON.stringify(invoices));
       resetForm();
       loadInvoices();
     }
-
+  
+    // Hapus invoice berdasarkan index
     function deleteInvoice(index) {
       const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
       invoices.splice(index, 1);
       localStorage.setItem("invoices", JSON.stringify(invoices));
       loadInvoices();
     }
-
+  
+    // Edit invoice berdasarkan index
     function editInvoice(index) {
       const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
       const invoice = invoices[index];
@@ -197,48 +205,60 @@
       totalAmount.value = invoice.total;
       invoiceDate.value = invoice.date;
     }
-
+  
+    // Generate QR Code untuk invoice
     function generateQRCode(index) {
       const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
       const invoice = invoices[index];
-
-      const link = `${window.location.origin}https://imandrifatur.github.io/invoice.github.io/?id=${invoice.id}&customer=${encodeURIComponent(invoice.customer)}&total=${invoice.total}&date=${encodeURIComponent(invoice.date)}`;
-      qrcode.innerHTML = "";
-
+      const link = `https://imandrifatur.github.io/invoice.github.io/?id=${invoice.id}&customer=${encodeURIComponent(
+        invoice.customer
+      )}&total=${invoice.total}&date=${encodeURIComponent(invoice.date)}`;
+  
+      qrcode.innerHTML = ""; // Hapus QR Code sebelumnya
       QRCode.toCanvas(link, { width: 200 }, (error, canvas) => {
-        if (!error) qrcode.appendChild(canvas);
+        if (!error) {
+          qrcode.appendChild(canvas);
+        }
       });
-
+  
       printInvoiceId.innerText = invoice.id;
       printCustomerName.innerText = invoice.customer;
       printTotalAmount.innerText = invoice.total;
       printInvoiceDate.innerText = invoice.date;
-
+  
       printSection.style.display = "block";
       window.scrollTo(0, document.body.scrollHeight);
     }
-
+  
+    // Generate PDF untuk invoice
     function generatePDF(index) {
       const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
       const invoice = invoices[index];
-
+  
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-
       doc.setFontSize(16);
       doc.text(`Invoice ID: ${invoice.id}`, 10, 20);
       doc.text(`Customer: ${invoice.customer}`, 10, 30);
       doc.text(`Total Amount: $${invoice.total}`, 10, 40);
       doc.text(`Date: ${invoice.date}`, 10, 50);
-
-      const link = `${window.location.origin}https://imandrifatur.github.io/invoice.github.io/?id=${invoice.id}&customer=${encodeURIComponent(invoice.customer)}&total=${invoice.total}&date=${encodeURIComponent(invoice.date)}`;
-      doc.addImage(qrcode.querySelector("canvas").toDataURL(), "PNG", 10, 60, 40, 40);
-
+  
+      const qrCanvas = qrcode.querySelector("canvas");
+      if (qrCanvas) {
+        const qrDataURL = qrCanvas.toDataURL();
+        doc.addImage(qrDataURL, "PNG", 10, 60, 40, 40);
+      }
+  
       doc.save(`${invoice.id}_invoice.pdf`);
     }
-
+  
+    // Render tabel menggunakan DataTables
     function renderTable(invoices) {
-      invoiceTableBody.innerHTML = "";
+      if (dataTableInstance) {
+        dataTableInstance.destroy(); // Hapus instance DataTable sebelumnya
+      }
+  
+      invoiceTableBody.innerHTML = ""; // Reset isi tabel
       invoices.forEach((invoice, index) => {
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -254,12 +274,12 @@
         `;
         invoiceTableBody.appendChild(row);
       });
-
-      // Initialize DataTable
-      $('#invoiceTable').DataTable();
+  
+      // Inisialisasi ulang DataTables
+      dataTableInstance = $(invoiceTable).DataTable();
     }
-
-    // Reset the form after saving
+  
+    // Reset form setelah menyimpan
     function resetForm() {
       invoiceIndex.value = "";
       invoiceId.value = "";
@@ -267,20 +287,20 @@
       totalAmount.value = "";
       invoiceDate.value = "";
     }
-
-    // Form Submission Event Listener
+  
+    // Event listener untuk form submit
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const invoice = {
         id: invoiceId.value,
         customer: customerName.value,
         total: totalAmount.value,
-        date: invoiceDate.value
+        date: invoiceDate.value,
       };
       saveInvoice(invoice);
     });
-
-    // Generate PDF Button Event Listener
+  
+    // Event listener untuk generate PDF
     generatePDFButton.addEventListener("click", () => {
       const invoiceId = printInvoiceId.innerText;
       const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
@@ -289,9 +309,10 @@
         generatePDF(invoices.indexOf(invoice));
       }
     });
-
-    // Initialize
+  
+    // Inisialisasi halaman
     loadInvoices();
   </script>
+  
 </body>
 </html>
