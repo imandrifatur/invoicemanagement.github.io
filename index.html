@@ -202,7 +202,7 @@
       const invoices = JSON.parse(localStorage.getItem("invoices")) || [];
       const invoice = invoices[index];
 
-      const link = `${window.location.origin}/https://imandrifatur.github.io/invoice.github.io/?id=${invoice.id}&customer=${encodeURIComponent(invoice.customer)}&total=${invoice.total}&date=${encodeURIComponent(invoice.date)}`;
+      const link = `${window.location.origin}https://imandrifatur.github.io/invoice.github.io/?id=${invoice.id}&customer=${encodeURIComponent(invoice.customer)}&total=${invoice.total}&date=${encodeURIComponent(invoice.date)}`;
       qrcode.innerHTML = "";
 
       QRCode.toCanvas(link, { width: 200 }, (error, canvas) => {
@@ -231,7 +231,7 @@
       doc.text(`Total Amount: $${invoice.total}`, 10, 40);
       doc.text(`Date: ${invoice.date}`, 10, 50);
 
-      const link = `${window.location.origin}/https://imandrifatur.github.io/invoice.github.io/?id=${invoice.id}&customer=${encodeURIComponent(invoice.customer)}&total=${invoice.total}&date=${encodeURIComponent(invoice.date)}`;
+      const link = `${window.location.origin}https://imandrifatur.github.io/invoice.github.io/?id=${invoice.id}&customer=${encodeURIComponent(invoice.customer)}&total=${invoice.total}&date=${encodeURIComponent(invoice.date)}`;
       doc.addImage(qrcode.querySelector("canvas").toDataURL(), "PNG", 10, 60, 40, 40);
 
       doc.save(`${invoice.id}_invoice.pdf`);
